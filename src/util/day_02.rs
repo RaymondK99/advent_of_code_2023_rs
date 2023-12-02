@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use util::day_02::Color::{Blue, Green, Red};
 use super::Part;
 
@@ -22,7 +21,7 @@ struct Cubes {
     num:usize
 }
 
-fn parse_line(line:&str)  -> VecDeque<Vec<Cubes>> {
+fn parse_line(line:&str)  -> Vec<Vec<Cubes>> {
     line.
         split(|c| c == ':' || c == ';')
         .map(|s| s.trim())
@@ -45,7 +44,7 @@ fn parse_line(line:&str)  -> VecDeque<Vec<Cubes>> {
         .collect()
 }
 
-fn game_possible(game:&VecDeque<Vec<Cubes>>) -> bool {
+fn game_possible(game:&Vec<Vec<Cubes>>) -> bool {
     game.iter().flatten()
         .into_iter()
         .fold(true, |a , cube| {
@@ -59,7 +58,7 @@ fn game_possible(game:&VecDeque<Vec<Cubes>>) -> bool {
 }
 
 
-fn min_num_cubes(game:&VecDeque<Vec<Cubes>>) -> usize {
+fn min_num_cubes(game:&Vec<Vec<Cubes>>) -> usize {
     let cubes:Vec<&Cubes> = game.into_iter().flatten().collect();
 
     let reds = cubes.iter().filter(|c| c.color == Red).map(|c| c.num).max().unwrap();
