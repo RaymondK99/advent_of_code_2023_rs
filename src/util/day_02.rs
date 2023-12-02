@@ -9,13 +9,12 @@ pub fn solve(input : String, part: Part) -> String {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 enum Color {
     Blue,
     Red,
     Green,
 }
-#[derive(Debug)]
 struct Cubes {
     color:Color,
     num:usize
@@ -61,33 +60,27 @@ fn game_possible(game:&Vec<Vec<Cubes>>) -> bool {
 fn min_num_cubes(game:&Vec<Vec<Cubes>>) -> usize {
     let cubes:Vec<&Cubes> = game.into_iter().flatten().collect();
 
-    let reds = cubes.iter().filter(|c| c.color == Red).map(|c| c.num).max().unwrap();
-    let blues = cubes.iter().filter(|c| c.color == Blue).map(|c| c.num).max().unwrap();
-    let greens = cubes.iter().filter(|c| c.color == Green).map(|c| c.num).max().unwrap();
-
-    reds * blues * greens
+    cubes.iter().filter(|c| c.color == Red).map(|c| c.num).max().unwrap() *
+        cubes.iter().filter(|c| c.color == Blue).map(|c| c.num).max().unwrap() *
+        cubes.iter().filter(|c| c.color == Green).map(|c| c.num).max().unwrap()
 }
 
-
 fn part1(lines: Vec<&str>) -> String {
-
-    let sum:usize = lines.iter()
+    lines.iter()
         .map(|line| parse_line(line))
         .enumerate()
         .filter(|(_, game)| game_possible(&game))
         .map(|(game_no,_)| game_no+1)
-        .sum();
-
-    sum.to_string()
+        .sum::<usize>()
+        .to_string()
 }
 
 fn part2(lines : Vec<&str>) -> String {
-    let sum:usize = lines.iter()
+    lines.iter()
         .map(|line| parse_line(line))
         .map(|game| min_num_cubes(&game))
-        .sum();
-
-    sum.to_string()
+        .sum::<usize>()
+        .to_string()
 }
 
 
