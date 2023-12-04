@@ -25,37 +25,27 @@ mod tests {
     use util::Part::{Part1, Part2};
 
 
+    const INPUT:&str = "";
+
     #[test]
     fn test1() {
-
-        let input = "A Y
-B X
-C Z";
-
-        assert_eq!("1", solve(input.to_string(), Part1));
+        assert_eq!("1", solve(INPUT.to_string(), Part1));
     }
 
     #[test]
     fn test_part1() {
         let input = include_str!("../../input/input_06.txt");
-
         assert_eq!("1", solve(input.to_string(), Part1));
     }
 
     #[test]
     fn test2() {
-
-        let input = "A Y
-B X
-C Z";
-
-        assert_eq!("2", solve(input.to_string(), Part2));
+        assert_eq!("2", solve(INPUT.to_string(), Part2));
     }
 
     #[test]
     fn test_part2() {
         let input = include_str!("../../input/input_06.txt");
-
         assert_eq!("2", solve(input.to_string(), Part2));
     }
 }

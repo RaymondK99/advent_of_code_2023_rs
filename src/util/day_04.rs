@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use super::Part;
 
 pub fn solve(input : String, part: Part) -> String {
@@ -9,9 +8,7 @@ pub fn solve(input : String, part: Part) -> String {
     }
 }
 
-#[derive(Debug)]
 struct Card{
-    _card_no:u32,
     winning:Vec<u32>,
     numbers:Vec<u32>,
 }
@@ -19,19 +16,20 @@ struct Card{
 impl Card {
     fn new(input:&str) -> Card {
         let mut it = input.split(|c| c == '|');
-        let mut first:VecDeque<u32> = it.next().unwrap().split(|c| c == ' ' || c== ':')
+        let mut winning:Vec<u32> = it.next().unwrap().split(|c| c == ' ' || c== ':')
             .into_iter()
             .filter(|s| s.starts_with(|c:char| c.is_digit(10)))
             .map(|s| s.parse::<u32>().unwrap())
             .collect();
 
-        let second = it.next().unwrap().split(|c| c == ' ' || c== ':')
+        let numbers = it.next().unwrap().split(|c| c == ' ' || c== ':')
             .into_iter()
             .filter(|s| s.starts_with(|c:char| c.is_digit(10)))
             .map(|s| s.parse::<u32>().unwrap())
             .collect();
 
-        Card{ _card_no:first.pop_front().unwrap(), winning:first.iter().copied().collect(), numbers:second}
+        winning.remove(0);
+        Card{winning, numbers }
     }
 
     fn matches(&self) -> usize {
