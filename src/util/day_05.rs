@@ -134,7 +134,6 @@ impl Layer {
                 // Add as is to transformed
                 transformed_intervals.push(unmapped_interval);
             }
-
         }
 
         transformed_intervals
