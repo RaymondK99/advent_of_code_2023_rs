@@ -33,6 +33,7 @@ impl Hand {
 
     const CARDS_VALUES:[char;13] = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     const CARDS_VALUES_PART2:[char;13] = ['A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J'];
+    const NUMBER_OF_CARDS:usize = Hand::CARDS_VALUES.len();
 
     fn new(line:&str, part2:bool) -> Hand {
         let mut it = line.split(' ');
@@ -44,7 +45,7 @@ impl Hand {
         for i in 0..5 {
             hand_value += Hand::get_card_value(cards[i], part2);
             if i < 4 {
-                hand_value *= Hand::CARDS_VALUES.len();
+                hand_value *= Hand::NUMBER_OF_CARDS;
             }
         }
 
