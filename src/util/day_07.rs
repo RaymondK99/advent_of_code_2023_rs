@@ -11,7 +11,7 @@ pub fn solve(input : String, part: Part) -> String {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 struct Hand {
     hand_type:HandType,
     hand_value:usize,
@@ -19,7 +19,7 @@ struct Hand {
     bid:u32,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
     FIVE = 7,
     FOUR = 6,
@@ -63,9 +63,9 @@ impl Hand {
 
     fn get_hand_value(cards:&Vec<char>, part2:bool) -> usize {
         let mut hand_value = 0;
-        for i in 0..5 {
+        for i in 0..cards.len() {
             hand_value += Hand::get_card_value(cards[i], part2);
-            if i < 4 {
+            if i < cards.len() - 1 {
                 hand_value *= Hand::NUMBER_OF_CARDS;
             }
         }
@@ -87,15 +87,15 @@ impl Hand {
     }
 
     fn get_hand_type_no_jokers(cards:&Vec<char>) -> HandType {
-        let mut array:[u8;u8::MAX as usize] = [0;u8::MAX as usize];
+        let mut frequency_vector:[u8;u8::MAX as usize] = [0;u8::MAX as usize];
         for i in 0..cards.len() {
-            array[cards[i] as usize] += 1;
+            frequency_vector[cards[i] as usize] += 1;
         }
 
-        let fives = array.iter().filter(|v| **v == 5).count();
-        let fours = array.iter().filter(|v| **v == 4).count();
-        let threes = array.iter().filter(|v| **v == 3).count();
-        let pairs = array.iter().filter(|v| **v == 2).count();
+        let fives = frequency_vector.iter().filter(|v| **v == 5).count();
+        let fours = frequency_vector.iter().filter(|v| **v == 4).count();
+        let threes = frequency_vector.iter().filter(|v| **v == 3).count();
+        let pairs = frequency_vector.iter().filter(|v| **v == 2).count();
 
         if fives == 1 {
             FIVE
