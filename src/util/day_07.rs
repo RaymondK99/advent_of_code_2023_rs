@@ -1,4 +1,5 @@
 use std::char;
+use std::cmp::Ordering;
 use util::day_07::HandType::{FIVE, FOUR, FullHouse, PAIR, THREE, HighCard, TwoPairs};
 use super::Part;
 
@@ -10,15 +11,15 @@ pub fn solve(input : String, part: Part) -> String {
     }
 }
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 struct Hand {
-    hand_type:u32,
+    hand_type:HandType,
     hand_value:usize,
     cards:Vec<char>,
     bid:u32,
 }
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
     FIVE = 7,
     FOUR = 6,
@@ -27,6 +28,22 @@ enum HandType {
     TwoPairs = 3,
     PAIR = 2,
     HighCard = 1,
+}
+
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.hand_type != other.hand_type {
+            self.hand_type.cmp(&other.hand_type)
+        } else {
+            self.hand_value.cmp(&other.hand_value)
+        }
+    }
+}
+
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Hand {
@@ -39,8 +56,12 @@ impl Hand {
         let mut it = line.split(' ');
         let cards = it.next().unwrap().chars().collect();
         let bid = it.next().unwrap().parse().unwrap();
-        let hand_type = Hand::get_hand_type(&cards, part2) as u32;
+        let hand_type = Hand::get_hand_type(&cards, part2);
+        let hand_value = Hand::get_hand_value(&cards, part2);
+        Hand{hand_type, hand_value, cards, bid}
+    }
 
+    fn get_hand_value(cards:&Vec<char>, part2:bool) -> usize {
         let mut hand_value = 0;
         for i in 0..5 {
             hand_value += Hand::get_card_value(cards[i], part2);
@@ -48,8 +69,7 @@ impl Hand {
                 hand_value *= Hand::NUMBER_OF_CARDS;
             }
         }
-
-        Hand{hand_type, hand_value, cards, bid}
+        hand_value
     }
 
     fn get_card_value(card:char, part2:bool) -> usize {
