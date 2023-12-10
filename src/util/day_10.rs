@@ -73,7 +73,6 @@ impl Tile {
     }
 
     fn matches(&self, exit_dir:&Direction, other:&Tile) -> bool {
-        //println!("Tile:{}, exits:{:?}, other:{}, entry:{:?}", self.ch, self.exit_directions, other.ch, other.entry_directions);
         for  entry_dir in other.entry_directions.iter() {
             if *entry_dir == NotAvail {
                 break;
@@ -109,7 +108,6 @@ fn next_pos(x:i32, y:i32, map:&Vec<Vec<Tile>>) -> Vec<(i32,i32)> {
     }
 
     next_steps
-
 }
 
 fn parse_map(lines:Vec<&str>) -> Vec<Vec<Tile>> {
@@ -162,9 +160,7 @@ fn get_pipe(map:&Vec<Vec<Tile>>) -> Vec<(i32,i32)> {
 
 
 fn part1(lines : Vec<&str>) -> String {
-
     let map = parse_map(lines);
-
     let pipe = get_pipe(&map);
     ((pipe.len()+1)/2).to_string()
 }
@@ -179,9 +175,11 @@ fn part2(lines : Vec<&str>) -> String {
     });
 
 
+    // Get top left corner
     let start_y = pipe.iter().map(|(_,y)| *y).min().unwrap();
     let start_x = pipe.iter().filter(|(_,y)| *y == start_y).map(|(x,_)| *x).min().unwrap();
 
+    // Start at top-left corner
     while *pipe.front().unwrap() != (start_x, start_y) {
         let item = pipe.pop_front().unwrap();
         pipe.push_back(item);
@@ -224,7 +222,7 @@ fn part2(lines : Vec<&str>) -> String {
 
         let mut next_inside_direction = current_inside_direction;
 
-        // Get side to fill...
+        // Check if we are turning
         if current_direction != next_dir {
             let turn = if current_direction == LEFT {
                 if next_dir == UP {
@@ -274,7 +272,6 @@ fn part2(lines : Vec<&str>) -> String {
             };
         }
 
-
         // Fill up inside positions
         let inside_directions = if current_inside_direction == next_inside_direction {
             vec![current_inside_direction]
@@ -292,11 +289,8 @@ fn part2(lines : Vec<&str>) -> String {
                 _ => panic!("..."),
             };
 
-            if fill_pos.0 >= 0 && fill_pos.0 < map.first().unwrap().len() as i32 && fill_pos.1 >= 0 && fill_pos.1 < map.len() as i32  {
-                // try to fill and all its neightbors
-                fill(fill_pos, &mut visited, &mut filled_positions);
-            }
-
+            // try to fill and all its neighbors
+            fill(fill_pos, &mut visited, &mut filled_positions);
         }
 
 
@@ -307,7 +301,6 @@ fn part2(lines : Vec<&str>) -> String {
         current_inside_direction = next_inside_direction;
 
     }
-
 
     filled_positions.len().to_string()
 }
