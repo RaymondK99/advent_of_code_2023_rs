@@ -9,10 +9,10 @@ pub fn solve(input : String, part: Part) -> String {
     }
 }
 
-#[derive(Debug)]
+
 enum Operation {
-    ADD(String, String, usize),
-    REMOVE(String, String),
+    ADD(String, usize),
+    REMOVE(String),
 }
 
 impl Operation {
@@ -20,16 +20,16 @@ impl Operation {
         let mut it = op_str.split(|c| c == '=' || c == '-');
         let label = it.next().unwrap().to_string();
         if op_str.contains("-") {
-            REMOVE(op_str.to_string(), label)
+            REMOVE(label)
         } else {
-            ADD(op_str.to_string(), label, it.next().unwrap().parse::<usize>().unwrap())
+            ADD(label, it.next().unwrap().parse::<usize>().unwrap())
         }
     }
 
     fn get_label(&self) -> &String {
         match self {
-            ADD(_, label, _) => label,
-            REMOVE(_, label) => label,
+            ADD(label, _) => label,
+            REMOVE(label) => label,
         }
     }
 
@@ -38,24 +38,14 @@ impl Operation {
             .fold(0, |prev, ch|  ((prev + ch as usize) * 17 ) % 256)
     }
 
-    fn hash_operation(&self) -> usize {
-        match self {
-            REMOVE(s, _) => Operation::hash_chars(s.as_str()),
-            ADD(s, _,_) => Operation::hash_chars(s.as_str()),
-        }
-    }
-
     fn hash_label(&self) -> usize {
-        match self {
-            REMOVE(_, s) => Operation::hash_chars(s.as_str()),
-            ADD(_, s,_) => Operation::hash_chars(s.as_str()),
-        }
+        Operation::hash_chars(self.get_label())
     }
 }
 
 fn part1(ops: Vec<&str>) -> String {
     ops.iter()
-        .map(|line| Operation::new(line).hash_operation())
+        .map(|line|Operation::hash_chars(line))
         .sum::<usize>()
         .to_string()
 }
@@ -70,17 +60,17 @@ fn part2(ops : Vec<&str>) -> String {
                 .map(|(index, _)| index);
 
             match op {
-                ADD(_, label, focal_len) => {
-                    if index_opt.is_some() {
-                        curr_box[index_opt.unwrap()].1 = focal_len;
-                    } else {
-                        curr_box.push((label.clone(), focal_len));
-                    }
+                ADD(label, focal_len) => {
+                    match index_opt {
+                        None => curr_box.push((label.clone(), focal_len)),
+                        Some(index) =>  curr_box[index].1 = focal_len,
+                    };
                 }
-                REMOVE(_, _) => {
-                    if index_opt.is_some() {
-                        curr_box.remove(index_opt.unwrap());
-                    }
+                REMOVE(_) => {
+                    match index_opt {
+                        Some(index) => {curr_box.remove(index);},
+                        None => {},
+                    };
                 }
             }
         });
