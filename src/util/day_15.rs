@@ -1,3 +1,4 @@
+use util::day_15::Operation::{ADD, REMOVE};
 use super::Part;
 
 pub fn solve(input : String, part: Part) -> String {
@@ -8,51 +9,81 @@ pub fn solve(input : String, part: Part) -> String {
     }
 }
 
-fn hash_chars(str:&str) -> usize {
-    str.chars()
-        .fold(0, |prev, ch|  ((prev + ch as usize) * 17 ) % 256)
+#[derive(Debug)]
+enum Operation {
+    ADD(String, String, usize),
+    REMOVE(String, String),
+}
+
+impl Operation {
+    fn new(op_str:&str) -> Operation {
+        let mut it = op_str.split(|c| c == '=' || c == '-');
+        let label = it.next().unwrap().to_string();
+        if op_str.contains("-") {
+            REMOVE(op_str.to_string(), label)
+        } else {
+            ADD(op_str.to_string(), label, it.next().unwrap().parse::<usize>().unwrap())
+        }
+    }
+
+    fn get_label(&self) -> &String {
+        match self {
+            ADD(_, label, _) => label,
+            REMOVE(_, label) => label,
+        }
+    }
+
+    fn hash_chars(str:&str) -> usize {
+        str.chars()
+            .fold(0, |prev, ch|  ((prev + ch as usize) * 17 ) % 256)
+    }
+
+    fn hash_operation(&self) -> usize {
+        match self {
+            REMOVE(s, _) => Operation::hash_chars(s.as_str()),
+            ADD(s, _,_) => Operation::hash_chars(s.as_str()),
+        }
+    }
+
+    fn hash_label(&self) -> usize {
+        match self {
+            REMOVE(_, s) => Operation::hash_chars(s.as_str()),
+            ADD(_, s,_) => Operation::hash_chars(s.as_str()),
+        }
+    }
 }
 
 fn part1(ops: Vec<&str>) -> String {
     ops.iter()
-        .map(|line| hash_chars(line))
+        .map(|line| Operation::new(line).hash_operation())
         .sum::<usize>()
         .to_string()
 }
 
 fn part2(ops : Vec<&str>) -> String {
-    let mut boxes:Vec<Vec<(&str, usize)>> = (0..256).into_iter().map(|_| Vec::new()).collect();
+    let mut boxes:Vec<Vec<(String, usize)>> = (0..256).into_iter().map(|_| Vec::new()).collect();
+    ops.iter().map(|line| Operation::new(line))
+        .for_each(|op| {
+            let curr_box = boxes.get_mut(op.hash_label()).unwrap();
+            let index_opt =  curr_box.iter().enumerate()
+                .find(|(_, (l, _))| l.eq(op.get_label()))
+                .map(|(index, _)| index);
 
-    // Run operations
-    for operation in ops {
-        let mut it = operation.split(|c| c == '=' || c == '-');
-        let label = it.next().unwrap();
-        let curr_box = boxes.get_mut(hash_chars(label)).unwrap();
-        let index_opt =  curr_box.iter().enumerate()
-            .find(|(_, (l, _))| l.eq(&label))
-            .map(|(index, _)| index);
-
-        if operation.contains("-") {
-            // Remove
-            match index_opt {
-                None => {},
-                Some(index) => { curr_box.remove(index);}
-            }
-        } else {
-            // Add or update
-            let focal_len = operation.split('=').last().unwrap().parse::<usize>().unwrap();
-
-            // Remove
-            match index_opt {
-                None => {
-                    curr_box.push((label, focal_len));
-                },
-                Some(index) => {
-                    curr_box[index].1 = focal_len;
+            match op {
+                ADD(_, label, focal_len) => {
+                    if index_opt.is_some() {
+                        curr_box[index_opt.unwrap()].1 = focal_len;
+                    } else {
+                        curr_box.push((label.clone(), focal_len));
+                    }
+                }
+                REMOVE(_, _) => {
+                    if index_opt.is_some() {
+                        curr_box.remove(index_opt.unwrap());
+                    }
                 }
             }
-        }
-    }
+        });
 
     // Sum focal power
     boxes.into_iter().enumerate()
@@ -60,7 +91,6 @@ fn part2(ops : Vec<&str>) -> String {
             .map(|(box_pos, (_, focal_len))| (box_no + 1) * (box_pos + 1) * focal_len)
             .sum::<usize>())
         .sum::<usize>().to_string()
-
 }
 
 
