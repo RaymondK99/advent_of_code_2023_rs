@@ -53,16 +53,16 @@ fn part1(ops: Vec<&str>) -> String {
 fn part2(ops : Vec<&str>) -> String {
     let mut boxes:Vec<Vec<(String, usize)>> = (0..256).into_iter().map(|_| Vec::new()).collect();
     ops.iter().map(|line| Operation::new(line))
-        .for_each(|op| {
-            let curr_box = boxes.get_mut(op.hash_label()).unwrap();
+        .for_each(|operation| {
+            let curr_box = boxes.get_mut(operation.hash_label()).unwrap();
             let index_opt =  curr_box.iter().enumerate()
-                .find(|(_, (l, _))| l.eq(op.get_label()))
+                .find(|(_, (l, _))| l.eq(operation.get_label()))
                 .map(|(index, _)| index);
 
-            match op {
+            match operation {
                 ADD(label, focal_len) => {
                     match index_opt {
-                        None => curr_box.push((label.clone(), focal_len)),
+                        None => curr_box.push((label, focal_len)),
                         Some(index) =>  curr_box[index].1 = focal_len,
                     };
                 }
