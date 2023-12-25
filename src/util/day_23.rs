@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        let input = include_str!("../../input/input_23.txt");
+        let _input = include_str!("../../input/input_23.txt");
         //assert_eq!("2", solve(input.to_string(), Part2));
     }
 }

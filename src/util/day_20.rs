@@ -28,9 +28,6 @@ impl Pulse {
         Pulse{pulse_value, src, dst}
     }
 
-    fn desc(&self) -> String {
-        format!("{} -{:?}-> {}", self.src, self.pulse_value, self.dst)
-    }
 }
 
 
@@ -279,7 +276,6 @@ fn part2(lines : Vec<&str>) -> String {
     let mut queue = VecDeque::new();
     let parent_node = get_parent_node("rx", &modules);
     let mut parent_inputs = HashMap::new();
-    println!("parent node:{}", parent_node);
 
     for i in 1..5000 {
         queue.push_front(Pulse::new(PulseValue::Low, String::from("aptly"), String::from("broadcaster")));
@@ -292,7 +288,6 @@ fn part2(lines : Vec<&str>) -> String {
                 if pulse.pulse_value == PulseValue::High {
                     if !parent_inputs.contains_key(&pulse.src) {
                         parent_inputs.insert(pulse.src.to_string(), i as u64);
-                        println!("i={}, {}", i, pulse.desc());
                     }
                 }
             }
