@@ -39,78 +39,53 @@ impl MachinePart {
 
 
 #[derive(Debug)]
-enum Condition {
-    GreaterThan(char, u32),
-    LessThan(char, u32),
+struct  Condition {
+    field_name:char,
+    comparator:char,
+    value:u32,
 }
+
 
 impl Condition {
 
     fn new(s:&str) -> Condition {
         let mut it = s.chars();
-        let ch = it.next().unwrap();
-        let cond = it.next().unwrap();
-        let num = &s[2..].parse::<u32>().unwrap();
-        if cond.eq(&'<') {
-            Condition::LessThan(ch, *num)
-        } else {
-            Condition::GreaterThan(ch, *num)
-        }
+        let field_name = it.next().unwrap();
+        let comparator = it.next().unwrap();
+        let value = *&s[2..].parse::<u32>().unwrap();
+        Condition{ field_name, comparator, value}
     }
 
-    fn check(&self, machine_part:&MachinePart) -> bool {
-        let field_value = machine_part.get_field_value(self.get_field());
-
-        match *self {
-            Condition::GreaterThan(_, rule_value) => rule_value < field_value,
-            Condition::LessThan(_, rule_value) => rule_value > field_value,
-        }
+    fn get_field_name(&self) -> char {
+        self.field_name
+    }
+    fn match_part(&self, machine_part:&MachinePart) -> bool {
+        let field_value = machine_part.get_field_value(self.get_field_name());
+        self.comparator == '>' && self.value < field_value || self.comparator == '<' && self.value > field_value
     }
 
-    fn get_field(&self) -> char {
-        match *self {
-            Condition::GreaterThan(ch, _) => ch,
-            Condition::LessThan(ch, _) => ch,
-        }
-    }
-
-
-    fn apply_interval(&self, intervals:&Vec<Vec<u32>>) -> (Vec<Vec<u32>>, Vec<Vec<u32>>) {
+    fn match_intervals(&self, intervals:Vec<(char, u32,u32)>) -> (Vec<(char, u32,u32)>, Vec<(char, u32,u32)>) {
         let mut matched_intervals = vec![];
         let mut unmatched_intervals = vec![];
-        for i in 0..intervals.len() {
-            let ch = match i {
-                0 => 'x',
-                1 => 'm',
-                2 => 'a',
-                3 => 's',
-                _ => panic!("..."),
-            };
-
-            if ch == self.get_field() {
-                let (matched, unmatched) = self.apply(&intervals[i]);
-                matched_intervals.push(matched);
-                unmatched_intervals.push(unmatched);
+        for (ch, start, end) in intervals {
+            if ch == self.field_name {
+                let (matched, unmatched) = self.match_interval((start, end));
+                matched_intervals.push((ch, matched.0, matched.1));
+                unmatched_intervals.push((ch, unmatched.0, unmatched.1));
             } else {
-                matched_intervals.push(intervals[i].iter().copied().collect());
-                unmatched_intervals.push(intervals[i].iter().copied().collect())
+                matched_intervals.push((ch, start, end));
+                unmatched_intervals.push((ch, start, end));
             }
         }
 
         (matched_intervals, unmatched_intervals)
     }
-    fn apply(&self, interval:&Vec<u32>) -> (Vec<u32>, Vec<u32>) {
-        match *self {
-            Condition::GreaterThan(_, value) => {
-                let matched = interval.iter().filter(| n| **n > value).copied().collect();
-                let unmatched = interval.iter().filter(| n| **n <= value).copied().collect();
-                (matched, unmatched)
-            }
-            Condition::LessThan(_, value) => {
-                let matched = interval.iter().filter(| n| **n < value).copied().collect();
-                let unmatched = interval.iter().filter(| n| **n >= value).copied().collect();
-                (matched, unmatched)
-            }
+
+    fn match_interval(&self, (start, end):(u32,u32)) -> ((u32,u32),(u32,u32)) {
+        if self.comparator == '>' {
+            ((self.value+1, end),(start, self.value))
+        } else {
+            ((start, self.value-1), (self.value, end))
         }
     }
 }
@@ -137,29 +112,23 @@ impl Rule {
         Rule{name, conditions, default_rule}
     }
 
-    fn check(&self, machine_part:&MachinePart) -> RuleResult {
-        for (condition, res) in self.conditions.iter() {
-            if condition.check(machine_part) {
-                return res.clone()
-            }
-        }
-
-        self.default_rule.clone()
+    fn match_part(&self, machine_part:&MachinePart) -> RuleResult {
+        self.conditions.iter()
+            .find(|(condition, _)| condition.match_part(machine_part))
+            .map_or(self.default_rule.clone(), |(_, res)| res.clone())
     }
 
 
-    fn apply_interval(&self, interval:Vec<Vec<u32>>) -> Vec<(Vec<Vec<u32>>, RuleResult)> {
+    fn match_interval(&self, start_intervals:Vec<(char,u32,u32)>) -> Vec<(Vec<(char,u32,u32)>, RuleResult)> {
         let mut output = vec![];
         let mut stack = VecDeque::new();
-        stack.push_back(interval);
+        stack.push_back(start_intervals);
         for (cond, rule_result) in self.conditions.iter() {
-            let next = stack.pop_front().unwrap();
-            let (matched, unmatched) = cond.apply_interval(&next);
-
+            let intervals = stack.pop_front().unwrap();
+            let (matched, unmatched) = cond.match_intervals(intervals);
             output.push((matched, rule_result.clone()));
             stack.push_front(unmatched);
         }
-
         output.push((stack.pop_front().unwrap(), self.default_rule.clone()));
         output
     }
@@ -199,10 +168,13 @@ impl MachinePart {
 
 
 fn match_rule(part:&MachinePart, rules:&Vec<Rule>) -> bool {
-    let mut next = rules.iter().find(|rule| rule.name.as_str().eq("in")).unwrap();
+    let mut stack = VecDeque::new();
+    stack.push_back(String::from("in"));
     loop {
-        let rule = next.check(part);
-        match rule {
+        let rule_name = stack.pop_front().unwrap();
+        let next_rule = rules.iter().find(|rule| rule.name.as_str().eq(rule_name.as_str())).unwrap();
+        let res = next_rule.match_part(part);
+        match res {
             Accepted => {
                 return true;
             },
@@ -210,27 +182,29 @@ fn match_rule(part:&MachinePart, rules:&Vec<Rule>) -> bool {
                 return false;
             }
             RuleResult::Rule(rule_name) => {
-                next = &rules.iter().find(|r| r.name.eq(&rule_name)).unwrap();
+                stack.push_back(rule_name);
             },
         }
     }
 }
 
 fn match_interval(rules:&Vec<Rule>) -> usize {
-    let v:Vec<u32> = (1..=4000).into_iter().collect();
+    let start_intervals = vec![('x', 1,4000),('m', 1,4000),('a', 1,4000),('s', 1,4000)];
     let mut accepted = 0;
     let mut queue = VecDeque::new();
-    queue.push_back((vec![v.clone(), v.clone(), v.clone(), v.clone()], "in".to_string()));
+    queue.push_back((start_intervals, "in".to_string()));
 
     while !queue.is_empty() {
         let (intervals, rule_name) = queue.pop_front().unwrap();
         let rule = rules.iter().find(|rule| rule.name.as_str().eq(rule_name.as_str())).unwrap();
-        let results = rule.apply_interval(intervals);
+        let results = rule.match_interval(intervals);
 
         for (interval, res) in results {
             match res {
                 Accepted => {
-                    accepted += interval.iter().map(|v| v.len()).product::<usize>();
+                    accepted += interval.iter().map(|(_, start, end)| *end - *start + 1)
+                        .map(|prod| prod as usize)
+                        .product::<usize>();
                 },
                 RuleResult::Rule(next_rule_name) => {
                     queue.push_back((interval, next_rule_name));
@@ -242,6 +216,7 @@ fn match_interval(rules:&Vec<Rule>) -> usize {
 
     accepted
 }
+
 fn part1(input_rules : Vec<&str>, input_parts : Vec<&str>) -> String {
     let parts:Vec<MachinePart> = input_parts.iter().map(|line| MachinePart::new(line)).collect();
     let rules:Vec<Rule> = input_rules.into_iter().map(|s| Rule::new(s)).collect();
